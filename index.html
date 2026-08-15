@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>Inventario Cíclico</title>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+max-width:700px;
+margin:auto;
+padding:15px;
+}
+
+h2{
+text-align:center;
+}
+
+select,input,button{
+width:100%;
+padding:14px;
+font-size:18px;
+margin-top:10px;
+box-sizing:border-box;
+}
+
+#reader{
+margin-top:15px;
+}
+
+#producto{
+display:none;
+border:1px solid #ccc;
+padding:15px;
+margin-top:15px;
+border-radius:10px;
+}
+
+.ok{
+color:green;
+font-weight:bold;
+}
+
+.error{
+color:red;
+font-weight:bold;
+}
+
+.warning{
+color:#d97706;
+font-weight:bold;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>Inventario Cíclico</h2>
+
+<select id="hoja"></select>
+
+<input
+id="codigoManual"
+placeholder="Escanea con pistola o escribe código"
+/>
+
+<button onclick="iniciarCamara()">
+📷 Iniciar Cámara
+</button>
+
+<div id="reader"></div>
+
+<div id="mensaje"></div>
+
+<div id="producto">
+
+<h3 id="articulo"></h3>
+
+<p><b>Código:</b> <span id="codigo"></span></p>
+
+<p><b>Sistema:</b> <span id="sistema"></span></p>
+
+<div id="duplicado" style="display:none">
+
+<p class="warning">
+⚠ Este producto ya fue escaneado
+</p>
+
+<p>
+Cantidad actual:
+<span id="cantidadExistente"></span>
+</p>
+
+<button onclick="editarCantidad()">
+Volver a capturar
+</button>
+
+</div>
+
+<div id="captura">
+
+<input
+type="number"
+id="cantidad"
+placeholder="Cantidad física encontrada"
+/>
+
+<button onclick="guardarCantidad()">
+Guardar
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const API =
+"https://script.google.com/macros/s/AKfycbzMncayugGQjmkF_e2Qi0y6KvSzQ3HTP5Vg7jsCdMUo6Aoo0paNTjx4tiZtw7jNdSMHCA/exec";
+
+let filaActual = null;
+
+async function cargarHojas(){
+
+const datos =
+await fetch(
+API + "?accion=hojas"
+);
+
+const hojas =
+await datos.json();
+
+const select =
+document.getElementById("hoja");
+
+hojas.forEach(h=>{
+
+const op =
+document.createElement("option");
+
+op.value=h;
+op.textContent=h;
+
+select.appendChild(op);
+
+});
+
+}
+
+cargarHojas();
+
+async function buscar(codigo){
+
+const hoja =
+document.getElementById("hoja").value;
+
+const r =
+await fetch(
+API +
+"?accion=buscar&codigo=" +
+encodeURIComponent(codigo) +
+"&hoja=" +
+encodeURIComponent(hoja)
+);
+
+const datos =
+await r.json();
+
+if(!datos.ok){
+
+document.getElementById(
+"mensaje"
+).innerHTML =
+"<span class='error'>Código no encontrado</span>";
+
+return;
+
+}
+
+filaActual =
+datos.fila;
+
+document.getElementById(
+"producto"
+).style.display =
+"block";
+
+document.getElementById(
+"articulo"
+).innerText =
+datos.articulo;
+
+document.getElementById(
+"codigo"
+).innerText =
+datos.codigo;
+
+document.getElementById(
+"sistema"
+).innerText =
+datos.sistema;
+
+if(
+datos.fisico !== "" &&
+datos.fisico !== null
+){
+
+document.getElementById(
+"duplicado"
+).style.display =
+"block";
+
+document.getElementById(
+"captura"
+).style.display =
+"none";
+
+document.getElementById(
+"cantidadExistente"
+).innerText =
+datos.fisico;
+
+}else{
+
+document.getElementById(
+"duplicado"
+).style.display =
+"none";
+
+document.getElementById(
+"captura"
+).style.display =
+"block";
+
+}
+
+}
+
+function editarCantidad(){
+
+document.getElementById(
+"duplicado"
+).style.display =
+"none";
+
+document.getElementById(
+"captura"
+).style.display =
+"block";
+
+}
+
+async function guardarCantidad(){
+
+const hoja =
+document.getElementById("hoja").value;
+
+const cantidad =
+Number(
+document.getElementById(
+"cantidad"
+).value
+);
+
+if(isNaN(cantidad)){
+alert("Captura una cantidad");
+return;
+}
+
+const r =
+await fetch(API,{
+
+method:"POST",
+
+headers:{
+"Content-Type":
+"application/json"
+},
+
+body:JSON.stringify({
+
+hoja:hoja,
+
+fila:filaActual,
+
+cantidad:cantidad
+
+})
+
+});
+
+const datos =
+await r.json();
+
+document.getElementById(
+"mensaje"
+).innerHTML =
+"<span class='ok'>Guardado. Diferencia: "
++ datos.diferencia +
+"</span>";
+
+document.getElementById(
+"producto"
+).style.display =
+"none";
+
+document.getElementById(
+"codigoManual"
+).focus();
+
+}
+
+document
+.getElementById(
+"codigoManual"
+)
+.addEventListener(
+"keypress",
+function(e){
+
+if(e.key==="Enter"){
+
+buscar(
+this.value.trim()
+);
+
+this.value="";
+
+}
+
+}
+);
+
+function iniciarCamara(){
+
+const scanner =
+new Html5Qrcode("reader");
+
+scanner.start(
+
+{
+facingMode:"environment"
+},
+
+{
+fps:10,
+qrbox:250
+},
+
+function(texto){
+
+buscar(texto);
+
+},
+
+function(err){}
+
+);
+
+}
+
+</script>
+
+</body>
+</html>
