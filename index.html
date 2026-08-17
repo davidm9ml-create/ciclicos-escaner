@@ -338,33 +338,33 @@ async function iniciarCamara(){
 
 try{
 
-const codeReader =
-new ZXing.BrowserMultiFormatReader();
+document.getElementById("reader").innerHTML =
+"Solicitando acceso a cámara...";
 
-codeReader.decodeFromVideoDevice(
-
-undefined,
-
-"reader",
-
-(result,err)=>{
-
-if(result){
-
-buscar(result.text);
-
-codeReader.reset();
-
+const stream =
+await navigator.mediaDevices.getUserMedia({
+video:{
+facingMode:"environment"
 }
+});
 
-}
+document.getElementById("reader").innerHTML="";
 
-);
+const video =
+document.createElement("video");
+
+video.autoplay=true;
+video.playsInline=true;
+video.srcObject=stream;
+video.style.width="100%";
+
+document.getElementById("reader")
+.appendChild(video);
 
 }catch(e){
 
 alert(
-"Error al abrir cámara: "
+"No se pudo abrir la cámara: "
 + e.message
 );
 
