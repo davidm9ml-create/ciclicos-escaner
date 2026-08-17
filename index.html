@@ -6,7 +6,7 @@
 
 <title>Inventario Cíclico</title>
 
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
 
 <style>
 
@@ -73,7 +73,9 @@ placeholder="Escanea con pistola o escribe código"
 <button onclick="iniciarCamara()">
 📷 Iniciar Cámara
 </button>
-
+<button onclick="detenerCamara()">
+🛑 Detener Cámara
+</button>
 <div id="reader"></div>
 
 <div id="mensaje"></div>
@@ -125,6 +127,7 @@ const API =
 "https://script.google.com/macros/s/AKfycbzMncayugGQjmkF_e2Qi0y6KvSzQ3HTP5Vg7jsCdMUo6Aoo0paNTjx4tiZtw7jNdSMHCA/exec";
 
 let filaActual = null;
+let codeReader = null;
 
 async function cargarHojas(){
 
@@ -331,54 +334,81 @@ this.value="";
 }
 );
 
-function iniciarCamara(){
+async function iniciarCamara(){
 
-const scanner =
-new Html5Qrcode("reader");
+try{
 
-scanner.start(
+if(codeReader){
 
-{
-facingMode:"environment"
-},
+try{
+codeReader.reset();
+}catch(e){}
 
-{
-fps:15,
+}
 
-qrbox:{
-width:300,
-height:150
-},
+codeReader = new ZXingBrowser.BrowserMultiFormatReader();
 
-aspectRatio:1.7778,
+const videoInputDevices =
+await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
 
-formatsToSupport:[
+let selectedDeviceId = null;
 
-Html5QrcodeSupportedFormats.EAN_13,
-Html5QrcodeSupportedFormats.EAN_8,
-Html5QrcodeSupportedFormats.UPC_A,
-Html5QrcodeSupportedFormats.UPC_E,
-Html5QrcodeSupportedFormats.CODE_128,
-Html5QrcodeSupportedFormats.CODE_39
+if(videoInputDevices.length > 0){
 
-]
+selectedDeviceId =
+videoInputDevices[
+videoInputDevices.length - 1
+].deviceId;
 
-},
+}
 
-function(texto){
+await codeReader.decodeFromVideoDevice(
 
-scanner.stop();
+selectedDeviceId,
 
-buscar(texto);
+"reader",
 
-},
+(result, err) => {
 
-function(error){}
+if(result){
 
+const codigo =
+result.getText();
+
+try{
+codeReader.reset();
+}catch(e){}
+
+buscar(codigo);
+
+}
+
+}
+
+);
+
+}catch(error){
+
+alert(
+"Error al abrir cámara: " +
+error.message
 );
 
 }
 
+}
+function detenerCamara(){
+
+if(codeReader){
+
+try{
+codeReader.reset();
+}catch(e){}
+
+}
+
+}
+  
 </script>
 
 </body>
