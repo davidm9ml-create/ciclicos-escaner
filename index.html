@@ -341,21 +341,9 @@ try{
 const codeReader =
 new ZXing.BrowserMultiFormatReader();
 
-const devices =
-await ZXing.BrowserCodeReader.listVideoInputDevices();
-
-let cameraId = null;
-
-if(devices.length){
-
-cameraId =
-devices[devices.length-1].deviceId;
-
-}
-
 codeReader.decodeFromVideoDevice(
 
-cameraId,
+undefined,
 
 "reader",
 
