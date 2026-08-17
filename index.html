@@ -6,7 +6,7 @@
 
 <title>Inventario Cíclico</title>
 
-<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+<script src="https://unpkg.com/@zxing/library@latest"></script>
 
 <style>
 
@@ -338,48 +338,34 @@ async function iniciarCamara(){
 
 try{
 
-if(codeReader){
+const codeReader =
+new ZXing.BrowserMultiFormatReader();
 
-try{
-codeReader.reset();
-}catch(e){}
+const devices =
+await ZXing.BrowserCodeReader.listVideoInputDevices();
 
-}
+let cameraId = null;
 
-codeReader = new ZXingBrowser.BrowserMultiFormatReader();
+if(devices.length){
 
-const videoInputDevices =
-await ZXingBrowser.BrowserCodeReader.listVideoInputDevices();
-
-let selectedDeviceId = null;
-
-if(videoInputDevices.length > 0){
-
-selectedDeviceId =
-videoInputDevices[
-videoInputDevices.length - 1
-].deviceId;
+cameraId =
+devices[devices.length-1].deviceId;
 
 }
 
-await codeReader.decodeFromVideoDevice(
+codeReader.decodeFromVideoDevice(
 
-selectedDeviceId,
+cameraId,
 
 "reader",
 
-(result, err) => {
+(result,err)=>{
 
 if(result){
 
-const codigo =
-result.getText();
+buscar(result.text);
 
-try{
 codeReader.reset();
-}catch(e){}
-
-buscar(codigo);
 
 }
 
@@ -387,11 +373,11 @@ buscar(codigo);
 
 );
 
-}catch(error){
+}catch(e){
 
 alert(
-"Error al abrir cámara: " +
-error.message
+"Error al abrir cámara: "
++ e.message
 );
 
 }
