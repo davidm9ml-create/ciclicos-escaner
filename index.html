@@ -273,26 +273,16 @@ alert("Captura una cantidad");
 return;
 }
 
+const form = new FormData();
+
+form.append("hoja", hoja);
+form.append("fila", filaActual);
+form.append("cantidad", cantidad);
+
 const r =
 await fetch(API,{
-
 method:"POST",
-
-headers:{
-"Content-Type":
-"application/json"
-},
-
-body:JSON.stringify({
-
-hoja:hoja,
-
-fila:filaActual,
-
-cantidad:cantidad
-
-})
-
+body:form
 });
 
 const datos =
@@ -309,6 +299,10 @@ document.getElementById(
 "producto"
 ).style.display =
 "none";
+
+document.getElementById(
+"cantidad"
+).value = "";
 
 document.getElementById(
 "codigoManual"
